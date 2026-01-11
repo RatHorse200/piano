@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>楽譜作成 - ピアノ</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Segoe UI', 'Hiragino Sans', sans-serif; 
+            background: #f0f2f5;
+            min-height: 100vh;
+            color: #333;
+            padding: 15px;
+        }
+        
+        /* ナビゲーション */
+        .nav {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        .nav a {
+            padding: 10px 24px;
+            background: #fff;
+            color: #1976d2;
+            text-decoration: none;
+            border-radius: 8px;
+            border: 2px solid #1976d2;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .nav a:hover {
+            background: #e3f2fd;
+        }
+        .nav a.active {
+            background: #1976d2;
+            color: #fff;
+        }
+        
+        h1 { 
+            text-align: center;
+            font-size: 1.6em; 
+            margin-bottom: 15px;
+            color: #1976d2;
+            font-weight: 600;
+        }
+        
+        .main-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 20px;
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+        
+        /* 左側パネル */
+        .side-panel {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .control-section {
+            margin-bottom: 12px;
+            padding: 12px;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #e8e8e8;
+        }
+        .control-section h3 {
+            font-size: 0.85em;
+            color: #1976d2;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #e3f2fd;
+            padding-bottom: 6px;
+            font-weight: 600;
+        }
+        .control-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 8px;
+        }
+        .control-row label {
+            width: 80px;
+            font-size: 0.8em;
+            color: #555;
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+        .control-row input[type="number"] {
+            width: 70px;
+            padding: 6px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.9em;
+            text-align: center;
+        }
+        .control-row select {
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.9em;
+            background: #fff;
+        }
+        
+        /* ボタン */
+        .btn {
+            padding: 12px 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.2s;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+        .record-btn {
+            background: #fff;
+            color: #333;
+        }
+        .record-btn:hover {
+            background: #ffebee;
+            border-color: #f44336;
+        }
+        .record-btn.recording {
+            background: #f44336;
+            color: #fff;
+            border-color: #f44336;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .clear-btn {
+            background: #fff;
+            color: #333;
+        }
+        .clear-btn:hover {
+            background: #fff3e0;
+            border-color: #ff9800;
+        }
+        .play-btn {
+            background: #2196f3;
+            color: #fff;
+            border-color: #2196f3;
+        }
+        .play-btn:hover {
+            background: #1976d2;
+        }
+        .play-btn:disabled {
+            opacity: 0.7;
+            cursor: default;
+        }
+        .stop-btn {
+            background: #ff5722;
+            color: #fff;
+            border-color: #ff5722;
+        }
+        .stop-btn:hover {
+            background: #e64a19;
+        }
+        .page-nav-btn {
+            background: #fff;
+            color: #333;
+            padding: 8px 16px;
+            width: auto;
+        }
+        .page-nav-btn:hover {
+            background: #e3f2fd;
+            border-color: #1976d2;
+        }
+        .page-nav-btn:disabled {
+            opacity: 0.4;
+            cursor: default;
+        }
+        .page-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .page-info {
+            font-size: 0.9em;
+            color: #555;
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        /* 右側エリア */
+        .right-area {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        /* ミニピアノ */
+        .mini-piano-container {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+        }
+        .mini-piano-container h4 {
+            text-align: center;
+            color: #555;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+        .mini-piano {
+            display: flex;
+            justify-content: center;
+            background: #222;
+            padding: 10px 10px 6px 10px;
+            border-radius: 6px;
+            user-select: none;
+        }
+        .mini-key {
+            position: relative;
+            width: 32px;
+            height: 100px;
+            background: linear-gradient(180deg, #f5f5f5 0%, #ddd 100%);
+            border: 1px solid #bbb;
+            border-radius: 0 0 4px 4px;
+            margin: 0 1px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 4px;
+        }
+        .mini-key:hover { background: linear-gradient(180deg, #fff 0%, #eee 100%); }
+        .mini-key.active {
+            background: linear-gradient(180deg, #ffd700 0%, #ffb700 100%);
+            transform: translateY(2px);
+        }
+        .mini-key .note-name { font-size: 8px; color: #666; }
+        .mini-key .key-bind {
+            font-size: 10px; color: #333; background: #ccc;
+            width: 18px; height: 18px; border-radius: 3px;
+            display: flex; align-items: center; justify-content: center;
+            margin-top: 2px; font-weight: bold;
+        }
+        
+        .mini-black-key {
+            position: absolute;
+            width: 20px; height: 65px;
+            background: linear-gradient(180deg, #444 0%, #111 100%);
+            border: none; border-radius: 0 0 3px 3px;
+            z-index: 10; top: 0; cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 4px;
+        }
+        .mini-black-key:hover { background: linear-gradient(180deg, #555 0%, #222 100%); }
+        .mini-black-key.active {
+            background: linear-gradient(180deg, #ffd700 0%, #cc9900 100%);
+            transform: translateY(2px);
+        }
+        .mini-black-key .key-bind {
+            background: #555; color: #fff;
+            width: 14px; height: 14px; font-size: 8px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 2px;
+        }
+        
+        .mini-black-key-wrapper {
+            position: relative;
+            width: 0;
+            overflow: visible;
+        }
+        .mini-black-key-wrapper .mini-black-key { left: -10px; }
+        
+        .octave-control {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .octave-control button {
+            background: #fff;
+            border: 1px solid #ddd;
+            color: #333;
+            padding: 6px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .octave-control button:hover {
+            background: #e3f2fd;
+            border-color: #1976d2;
+        }
+        .octave-display {
+            font-size: 0.9em;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        /* 楽譜表示 */
+        .score-container {
+            background: #fffef8;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            flex: 1;
+            overflow-x: auto;
+        }
+        .score-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .score-header h3 {
+            font-size: 1.1em;
+            color: #1976d2;
+            margin: 0;
+        }
+        .canvas-wrapper {
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+        #score-canvas {
+            background: #fffef8;
+            border: 1px solid #d0d0d0;
+            border-radius: 6px;
+            display: block;
+        }
+        
+        /* 現在の音表示 */
+        .current-note-display {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #555;
+        }
+        .current-note {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #1976d2;
+        }
+        
+        /* 凡例 */
+        .score-legend {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 15px;
+            font-size: 0.85em;
+            color: #555;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .legend-note {
+            display: inline-flex;
+            align-items: flex-end;
+            justify-content: center;
+            width: 20px;
+            height: 28px;
+            position: relative;
+            font-family: 'Times New Roman', serif;
+            font-size: 1.8em;
+        }
+        /* 音符の玉（楕円） */
+        .note-head {
+            width: 10px;
+            height: 7px;
+            border-radius: 50%;
+            transform: rotate(-15deg);
+            position: absolute;
+            bottom: 0;
+            left: 2px;
+        }
+        .note-head.filled {
+            background: #000;
+        }
+        .note-head.hollow {
+            border: 1.5px solid #000;
+            background: transparent;
+        }
+        /* 符幹（棒） */
+        .note-stem {
+            width: 1.5px;
+            height: 18px;
+            background: #000;
+            position: absolute;
+            bottom: 3px;
+            left: 11px;
+        }
+        /* 旗 */
+        .note-flag {
+            position: absolute;
+            top: 0;
+            left: 11px;
+            width: 6px;
+            height: 10px;
+            border-right: 1.5px solid #000;
+            border-bottom: 1.5px solid #000;
+            border-radius: 0 0 6px 0;
+        }
+        .note-flag.double {
+            height: 7px;
+        }
+        .note-flag.second {
+            top: 6px;
+        }
+    </style>
+</head>
+<body>
+    <!-- ナビゲーション -->
+    <nav class="nav">
+        <a href="score.html" class="active">楽譜作成</a>
+        <a href="index.html">ピアノ</a>
+    </nav>
+    
+    <h1>楽譜作成</h1>
+    
+    <div class="main-container">
+        <!-- 左：コントロール -->
+        <div class="side-panel">
+            <!-- 録音コントロール -->
+            <div class="control-section">
+                <h3>録音</h3>
+                <button class="btn record-btn" id="record-btn">録音開始</button>
+                <button class="btn clear-btn" id="clear-btn">クリア</button>
+            </div>
+            
+            <!-- 設定 -->
+            <div class="control-section">
+                <h3>設定</h3>
+                <div class="control-row">
+                    <label>テンポ</label>
+                    <input type="number" id="tempo" value="120" min="40" max="240">
+                    <span>BPM</span>
+                </div>
+                <div class="control-row">
+                    <label>拍子</label>
+                    <select id="time-signature">
+                        <option value="4/4">4/4</option>
+                        <option value="3/4">3/4</option>
+                        <option value="2/4">2/4</option>
+                        <option value="6/8">6/8</option>
+                        <option value="2/2">2/2</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- 再生 -->
+            <div class="control-section">
+                <h3>再生</h3>
+                <button class="btn play-btn" id="play-btn">再生</button>
+                <button class="btn stop-btn" id="stop-btn" style="display:none;">停止</button>
+            </div>
+        </div>
+        
+        <!-- 右：ピアノ＆楽譜 -->
+        <div class="right-area">
+            <!-- ミニピアノ -->
+            <div class="mini-piano-container">
+                <h4>ピアノ</h4>
+                <div class="mini-piano" id="piano">
+                    <div class="mini-key" data-note="C"><span class="note-name">ド</span><span class="key-bind">A</span></div>
+                    <div class="mini-black-key-wrapper"><div class="mini-black-key" data-note="C#"><span class="key-bind">W</span></div></div>
+                    <div class="mini-key" data-note="D"><span class="note-name">レ</span><span class="key-bind">S</span></div>
+                    <div class="mini-black-key-wrapper"><div class="mini-black-key" data-note="D#"><span class="key-bind">E</span></div></div>
+                    <div class="mini-key" data-note="E"><span class="note-name">ミ</span><span class="key-bind">D</span></div>
+                    <div class="mini-key" data-note="F"><span class="note-name">ファ</span><span class="key-bind">F</span></div>
+                    <div class="mini-black-key-wrapper"><div class="mini-black-key" data-note="F#"><span class="key-bind">T</span></div></div>
+                    <div class="mini-key" data-note="G"><span class="note-name">ソ</span><span class="key-bind">G</span></div>
+                    <div class="mini-black-key-wrapper"><div class="mini-black-key" data-note="G#"><span class="key-bind">Y</span></div></div>
+                    <div class="mini-key" data-note="A"><span class="note-name">ラ</span><span class="key-bind">H</span></div>
+                    <div class="mini-black-key-wrapper"><div class="mini-black-key" data-note="A#"><span class="key-bind">U</span></div></div>
+                    <div class="mini-key" data-note="B"><span class="note-name">シ</span><span class="key-bind">J</span></div>
+                    <div class="mini-key" data-note="C2"><span class="note-name">ド</span><span class="key-bind">K</span></div>
+                </div>
+                <div class="octave-control">
+                    <button onclick="scoreApp.changeOctave(-1)">低く</button>
+                    <div class="octave-display">オクターブ: <span id="octave-value">4</span></div>
+                    <button onclick="scoreApp.changeOctave(1)">高く</button>
+                </div>
+                <div class="current-note-display">
+                    現在の音: <span class="current-note" id="current-note">-</span>
+                </div>
+            </div>
+            
+            <!-- 楽譜 -->
+            <div class="score-container">
+                <div class="score-header">
+                    <h3>楽譜</h3>
+                </div>
+                <div class="canvas-wrapper">
+                    <canvas id="score-canvas"></canvas>
+                </div>
+                <div class="page-nav" id="page-nav" style="display:none;">
+                    <button class="btn page-nav-btn" id="prev-page-btn">前のページ</button>
+                    <span class="page-info" id="page-info">1 / 1</span>
+                    <button class="btn page-nav-btn" id="next-page-btn">次のページ</button>
+                </div>
+                <div class="score-legend">
+                    <div class="legend-item">
+                        <canvas id="legend-whole" width="30" height="40"></canvas>
+                        全音符
+                    </div>
+                    <div class="legend-item">
+                        <canvas id="legend-half" width="30" height="40"></canvas>
+                        2分音符
+                    </div>
+                    <div class="legend-item">
+                        <canvas id="legend-quarter" width="30" height="40"></canvas>
+                        4分音符
+                    </div>
+                    <div class="legend-item">
+                        <canvas id="legend-eighth" width="30" height="40"></canvas>
+                        8分音符
+                    </div>
+                    <div class="legend-item">
+                        <canvas id="legend-sixteenth" width="30" height="40"></canvas>
+                        16分音符
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== 楽譜作成アプリ ==========
+        class ScoreApp {
+            constructor() {
+                this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // 設定
+                this.octave = 4;
+                this.tempo = 120;
+                this.timeSignature = '4/4';
+                this.volume = 0.5;
+                
+                // キー状態
+                this.pressedKeys = new Set();
+                this.pressedMouse = new Set();
+                this.activeOscillators = new Map();
+                
+                // 録音
+                this.isRecording = false;
+                this.recordStartTime = 0;
+                this.recordedNotes = [];
+                this.noteStartTimes = new Map();
+                this.recordTimer = null;
+                
+                // 再生
+                this.isPlaying = false;
+                this.playbackPosition = 0;
+                this.playbackAnimationId = null;
+                
+                // メトロノーム
+                this.metronomeInterval = null;
+                this.metronomeEnabled = true;
+                
+                // ページ管理（楽譜の折り返し）
+                this.currentPage = 0;
+                this.pageStartTime = 0;
+                this.displayPage = 0;
+                this.totalPages = 1;
+                
+                // 録音中のアニメーション
+                this.recordAnimationId = null;
+                
+                // キーマップ
+                this.keyMap = {
+                    'a': 'C', 'w': 'C#', 's': 'D', 'e': 'D#',
+                    'd': 'E', 'f': 'F', 't': 'F#', 'g': 'G',
+                    'y': 'G#', 'h': 'A', 'u': 'A#', 'j': 'B', 'k': 'C2'
+                };
+                
+                this.noteNames = {
+                    'C': 'ド', 'C#': 'ド#', 'D': 'レ', 'D#': 'レ#',
+                    'E': 'ミ', 'F': 'ファ', 'F#': 'ファ#', 'G': 'ソ',
+                    'G#': 'ソ#', 'A': 'ラ', 'A#': 'ラ#', 'B': 'シ', 'C2': 'ド'
+                };
+                
+                // 楽譜設定
+                this.lineSpacing = 12;
+                this.staffHeight = this.lineSpacing * 4;
+                this.staffGap = 80;
+                this.marginLeft = 30;
+                this.marginTop = 40;
+                this.pixelsPerMs = 0.15;
+                this.notesStartX = 100;
+                
+                this.setupEventListeners();
+                this.setupControls();
+                this.drawScore();
+                this.drawLegend();
+            }
+            
+            // メトロノームクリック音
+            playMetronomeClick(isDownbeat = false) {
+                const now = this.audioCtx.currentTime;
+                const osc = this.audioCtx.createOscillator();
+                const gain = this.audioCtx.createGain();
+                
+                // ダウンビートは高い音、それ以外は低い音
+                osc.frequency.value = isDownbeat ? 1000 : 800;
+                osc.type = 'sine';
+                
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                
+                osc.connect(gain);
+                gain.connect(this.audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            }
+            
+            startMetronome() {
+                if (this.metronomeInterval) clearInterval(this.metronomeInterval);
+                
+                const { beats, beatType } = this.getTimeSignatureInfo();
+                // beatType分音符の長さ（テンポは4分音符基準）
+                const beatUnitMs = (60000 / this.tempo) * (4 / beatType);
+                let beatCount = 0;
+                
+                // 最初のクリック
+                this.playMetronomeClick(true);
+                beatCount = 1;
+                
+                this.metronomeInterval = setInterval(() => {
+                    beatCount = (beatCount % beats) + 1;
+                    this.playMetronomeClick(beatCount === 1);
+                }, beatUnitMs);
+            }
+            
+            stopMetronome() {
+                if (this.metronomeInterval) {
+                    clearInterval(this.metronomeInterval);
+                    this.metronomeInterval = null;
+                }
+            }
+            
+            getTimeSignatureInfo() {
+                const [beats, beatType] = this.timeSignature.split('/').map(Number);
+                return { beats, beatType };
+            }
+            
+            getFrequency(note, octave) {
+                const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+                let noteIndex = notes.indexOf(note);
+                let oct = octave;
+                if (note === 'C2') { noteIndex = 0; oct = octave + 1; }
+                const a4 = 440;
+                const semitones = (oct - 4) * 12 + (noteIndex - 9);
+                return a4 * Math.pow(2, semitones / 12);
+            }
+            
+            noteOn(note) {
+                if (this.activeOscillators.has(note)) return;
+                
+                const frequency = this.getFrequency(note, this.octave);
+                const now = this.audioCtx.currentTime;
+                
+                // ピアノ音シミュレーション（複数の倍音を重ねる）
+                const oscillators = [];
+                const masterGain = this.audioCtx.createGain();
+                masterGain.gain.setValueAtTime(0, now);
+                masterGain.connect(this.audioCtx.destination);
+                
+                // 基音（三角波）
+                const osc1 = this.audioCtx.createOscillator();
+                osc1.type = 'triangle';
+                osc1.frequency.value = frequency;
+                const gain1 = this.audioCtx.createGain();
+                gain1.gain.value = 0.5;
+                osc1.connect(gain1);
+                gain1.connect(masterGain);
+                osc1.start(now);
+                oscillators.push(osc1);
+                
+                // 第2倍音
+                const osc2 = this.audioCtx.createOscillator();
+                osc2.type = 'sine';
+                osc2.frequency.value = frequency * 2;
+                const gain2 = this.audioCtx.createGain();
+                gain2.gain.value = 0.15;
+                osc2.connect(gain2);
+                gain2.connect(masterGain);
+                osc2.start(now);
+                oscillators.push(osc2);
+                
+                // 第3倍音
+                const osc3 = this.audioCtx.createOscillator();
+                osc3.type = 'sine';
+                osc3.frequency.value = frequency * 3;
+                const gain3 = this.audioCtx.createGain();
+                gain3.gain.value = 0.08;
+                osc3.connect(gain3);
+                gain3.connect(masterGain);
+                osc3.start(now);
+                oscillators.push(osc3);
+                
+                // ピアノらしいエンベロープ（速いアタック、減衰）
+                masterGain.gain.linearRampToValueAtTime(this.volume, now + 0.005);
+                masterGain.gain.exponentialRampToValueAtTime(this.volume * 0.7, now + 0.1);
+                masterGain.gain.exponentialRampToValueAtTime(this.volume * 0.5, now + 0.3);
+                
+                this.activeOscillators.set(note, { oscillators, masterGain, frequency });
+                
+                const octaveForNote = note === 'C2' ? this.octave + 1 : this.octave;
+                document.getElementById('current-note').textContent = 
+                    this.noteNames[note] + octaveForNote + ' (' + Math.round(frequency) + 'Hz)';
+                
+                this.activateKey(note);
+                
+                if (this.isRecording) {
+                    const noteKey = note + '_' + octaveForNote;
+                    this.noteStartTimes.set(noteKey, {
+                        note: note,
+                        octave: octaveForNote,
+                        startTime: Date.now() - this.recordStartTime
+                    });
+                }
+            }
+            
+            noteOff(note) {
+                const oscData = this.activeOscillators.get(note);
+                if (!oscData) return;
+                
+                const now = this.audioCtx.currentTime;
+                oscData.masterGain.gain.cancelScheduledValues(now);
+                oscData.masterGain.gain.setValueAtTime(oscData.masterGain.gain.value, now);
+                oscData.masterGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                
+                oscData.oscillators.forEach(osc => {
+                    osc.stop(now + 0.35);
+                });
+                
+                this.activeOscillators.delete(note);
+                this.deactivateKey(note);
+                
+                if (this.isRecording) {
+                    const octaveForNote = note === 'C2' ? this.octave + 1 : this.octave;
+                    const noteKey = note + '_' + octaveForNote;
+                    const startInfo = this.noteStartTimes.get(noteKey);
+                    if (startInfo) {
+                        const endTime = Date.now() - this.recordStartTime;
+                        const duration = endTime - startInfo.startTime;
+                        this.recordedNotes.push({
+                            note: startInfo.note,
+                            octave: startInfo.octave,
+                            startTime: startInfo.startTime,
+                            duration: duration
+                        });
+                        this.noteStartTimes.delete(noteKey);
+                        this.drawScore();
+                    }
+                }
+            }
+            
+            activateKey(note) {
+                const key = document.querySelector('[data-note="' + note + '"]');
+                if (key) key.classList.add('active');
+            }
+            
+            deactivateKey(note) {
+                const key = document.querySelector('[data-note="' + note + '"]');
+                if (key) key.classList.remove('active');
+            }
+            
+            changeOctave(delta) {
+                this.octave = Math.max(1, Math.min(7, this.octave + delta));
+                document.getElementById('octave-value').textContent = this.octave;
+            }
+            
+            setupEventListeners() {
+                document.addEventListener('keydown', (e) => {
+                    if (e.repeat) return;
+                    const key = e.key.toLowerCase();
+                    if (key === 'z') { this.changeOctave(-1); return; }
+                    if (key === 'x') { this.changeOctave(1); return; }
+                    if (this.pressedKeys.has(key)) return;
+                    const note = this.keyMap[key];
+                    if (note) {
+                        this.pressedKeys.add(key);
+                        this.noteOn(note);
+                    }
+                });
+                
+                document.addEventListener('keyup', (e) => {
+                    const key = e.key.toLowerCase();
+                    const note = this.keyMap[key];
+                    if (note) {
+                        this.pressedKeys.delete(key);
+                        this.noteOff(note);
+                    }
+                });
+                
+                const piano = document.getElementById('piano');
+                piano.addEventListener('mousedown', (e) => {
+                    let el = e.target;
+                    while (el && !el.dataset.note) el = el.parentElement;
+                    if (el && el.dataset.note) {
+                        const note = el.dataset.note;
+                        if (!this.pressedMouse.has(note)) {
+                            this.pressedMouse.add(note);
+                            this.noteOn(note);
+                        }
+                    }
+                });
+                piano.addEventListener('mouseup', (e) => {
+                    let el = e.target;
+                    while (el && !el.dataset.note) el = el.parentElement;
+                    if (el && el.dataset.note) {
+                        const note = el.dataset.note;
+                        this.pressedMouse.delete(note);
+                        this.noteOff(note);
+                    }
+                });
+                piano.addEventListener('mouseleave', () => {
+                    this.pressedMouse.forEach(note => this.noteOff(note));
+                    this.pressedMouse.clear();
+                });
+                document.querySelectorAll('.mini-key, .mini-black-key').forEach(key => {
+                    key.addEventListener('mouseleave', () => {
+                        const note = key.dataset.note;
+                        if (this.pressedMouse.has(note)) {
+                            this.pressedMouse.delete(note);
+                            this.noteOff(note);
+                        }
+                    });
+                });
+            }
+            
+            setupControls() {
+                document.getElementById('record-btn').addEventListener('click', () => this.toggleRecording());
+                document.getElementById('clear-btn').addEventListener('click', () => this.clearScore());
+                document.getElementById('play-btn').addEventListener('click', () => this.playScore());
+                document.getElementById('stop-btn').addEventListener('click', () => this.stopPlayback());
+                document.getElementById('prev-page-btn').addEventListener('click', () => this.prevPage());
+                document.getElementById('next-page-btn').addEventListener('click', () => this.nextPage());
+                document.getElementById('tempo').addEventListener('change', (e) => {
+                    this.tempo = parseInt(e.target.value) || 120;
+                    this.drawScore();
+                });
+                document.getElementById('time-signature').addEventListener('change', (e) => {
+                    this.timeSignature = e.target.value;
+                    this.drawScore();
+                });
+            }
+            
+            prevPage() {
+                if (this.displayPage > 0) {
+                    this.displayPage--;
+                    this.updatePageNav();
+                    this.drawScore();
+                }
+            }
+            
+            nextPage() {
+                if (this.displayPage < this.totalPages - 1) {
+                    this.displayPage++;
+                    this.updatePageNav();
+                    this.drawScore();
+                }
+            }
+            
+            updatePageNav() {
+                const pageNav = document.getElementById('page-nav');
+                const prevBtn = document.getElementById('prev-page-btn');
+                const nextBtn = document.getElementById('next-page-btn');
+                const pageInfo = document.getElementById('page-info');
+                
+                if (this.recordedNotes.length > 0 && !this.isRecording && !this.isPlaying) {
+                    pageNav.style.display = 'flex';
+                    pageInfo.textContent = (this.displayPage + 1) + ' / ' + this.totalPages;
+                    prevBtn.disabled = this.displayPage === 0;
+                    nextBtn.disabled = this.displayPage >= this.totalPages - 1;
+                } else {
+                    pageNav.style.display = 'none';
+                }
+            }
+            
+            toggleRecording() {
+                const recordBtn = document.getElementById('record-btn');
+                if (this.isRecording) {
+                    this.isRecording = false;
+                    recordBtn.classList.remove('recording');
+                    recordBtn.textContent = '録音開始';
+                    clearInterval(this.recordTimer);
+                    this.stopMetronome();
+                    
+                    // 録音中アニメーション停止
+                    if (this.recordAnimationId) {
+                        cancelAnimationFrame(this.recordAnimationId);
+                        this.recordAnimationId = null;
+                    }
+                    
+                    this.noteStartTimes.forEach((info) => {
+                        const endTime = Date.now() - this.recordStartTime;
+                        this.recordedNotes.push({
+                            note: info.note,
+                            octave: info.octave,
+                            startTime: info.startTime,
+                            duration: endTime - info.startTime
+                        });
+                    });
+                    this.noteStartTimes.clear();
+                    
+                    // ページ数を計算してナビ表示
+                    this.calculateTotalPages();
+                    this.displayPage = 0;
+                    this.updatePageNav();
+                    this.drawScore();
+                } else {
+                    // 新規録音開始時に古い楽譜を自動クリア
+                    if (this.recordedNotes.length > 0) {
+                        this.recordedNotes = [];
+                        this.noteStartTimes.clear();
+                    }
+                    
+                    this.isRecording = true;
+                    this.recordStartTime = Date.now();
+                    this.currentPage = 0;
+                    this.pageStartTime = 0;
+                    this.displayPage = 0;
+                    recordBtn.classList.add('recording');
+                    recordBtn.textContent = '録音停止';
+                    this.startMetronome();
+                    
+                    // ページナビを非表示
+                    document.getElementById('page-nav').style.display = 'none';
+                    
+                    // 録音中のアニメーション開始
+                    const animateRecording = () => {
+                        if (!this.isRecording) return;
+                        const elapsed = Date.now() - this.recordStartTime;
+                        this.checkPageWrap();
+                        this.drawScore(elapsed);
+                        this.recordAnimationId = requestAnimationFrame(animateRecording);
+                    };
+                    this.recordAnimationId = requestAnimationFrame(animateRecording);
+                }
+            }
+            
+            calculateTotalPages() {
+                if (this.recordedNotes.length === 0) {
+                    this.totalPages = 1;
+                    return;
+                }
+                const canvas = document.getElementById('score-canvas');
+                const wrapper = canvas.parentElement;
+                const displayWidth = Math.max(wrapper.clientWidth - 10, 600);
+                const staffWidth = displayWidth - this.notesStartX - 40;
+                const msPerStaff = staffWidth / this.pixelsPerMs;
+                const totalMsPerPage = msPerStaff * 2;
+                
+                const lastNote = this.recordedNotes[this.recordedNotes.length - 1];
+                const totalMs = lastNote.startTime + lastNote.duration;
+                this.totalPages = Math.floor(totalMs / totalMsPerPage) + 1;
+            }
+            
+            checkPageWrap() {
+                const canvas = document.getElementById('score-canvas');
+                const wrapper = canvas.parentElement;
+                const displayWidth = wrapper.clientWidth - 10;
+                const staffWidth = displayWidth - this.notesStartX - 40;
+                const msPerStaff = staffWidth / this.pixelsPerMs;
+                const totalMsPerPage = msPerStaff * 2; // 2段分
+                
+                const currentRecordTime = Date.now() - this.recordStartTime;
+                const adjustedTime = currentRecordTime - this.pageStartTime;
+                
+                if (adjustedTime > totalMsPerPage) {
+                    // ページ更新
+                    this.currentPage++;
+                    this.pageStartTime = currentRecordTime;
+                    this.drawScore();
+                }
+            }
+            
+            clearScore() {
+                this.recordedNotes = [];
+                this.noteStartTimes.clear();
+                if (this.recordTimer) clearInterval(this.recordTimer);
+                if (this.recordAnimationId) {
+                    cancelAnimationFrame(this.recordAnimationId);
+                    this.recordAnimationId = null;
+                }
+                this.stopMetronome();
+                this.isRecording = false;
+                this.playbackPosition = 0;
+                this.currentPage = 0;
+                this.pageStartTime = 0;
+                this.displayPage = 0;
+                this.totalPages = 1;
+                document.getElementById('record-btn').classList.remove('recording');
+                document.getElementById('record-btn').textContent = '録音開始';
+                document.getElementById('page-nav').style.display = 'none';
+                this.drawScore();
+            }
+            
+            // 音符描画
+            drawNote(ctx, x, y, beats, lineSpacing) {
+                const noteWidth = lineSpacing * 0.75;
+                const noteHeight = lineSpacing * 0.5;
+                const stemHeight = lineSpacing * 3;
+                
+                ctx.fillStyle = '#000';
+                ctx.strokeStyle = '#000';
+                
+                if (beats >= 3) {
+                    // 全音符（白抜き楕円、棒なし）
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.ellipse(x, y, noteWidth, noteHeight, -0.2, 0, Math.PI * 2);
+                    ctx.stroke();
+                } else if (beats >= 1.5) {
+                    // 2分音符（白抜き楕円 + 棒）
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.ellipse(x, y, noteWidth, noteHeight, -0.2, 0, Math.PI * 2);
+                    ctx.stroke();
+                    // 棒（符幹）- 音符の右端から上に
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(x + noteWidth - 1, y);
+                    ctx.lineTo(x + noteWidth - 1, y - stemHeight);
+                    ctx.stroke();
+                } else {
+                    // 4分音符以下（黒塗り楕円 + 棒）
+                    ctx.beginPath();
+                    ctx.ellipse(x, y, noteWidth, noteHeight, -0.2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillRect(x + noteWidth - 1.5, y - stemHeight, 2, stemHeight);
+                    
+                    if (beats < 0.75 && beats >= 0.375) {
+                        this.drawFlag(ctx, x + noteWidth, y - stemHeight, lineSpacing);
+                    } else if (beats < 0.375) {
+                        this.drawFlag(ctx, x + noteWidth, y - stemHeight, lineSpacing);
+                        this.drawFlag(ctx, x + noteWidth, y - stemHeight + lineSpacing * 0.5, lineSpacing);
+                    }
+                }
+            }
+            
+            drawFlag(ctx, x, y, lineSpacing) {
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.quadraticCurveTo(x + lineSpacing * 0.7, y + lineSpacing * 0.25, x + lineSpacing * 0.35, y + lineSpacing * 0.8);
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+            
+            // 凡例描画（drawNote関数を使用）
+            drawLegend() {
+                const lineSpacing = 10;
+                const noteX = 12;
+                const noteY = 32;
+                
+                // 全音符（4拍）
+                const wholeCanvas = document.getElementById('legend-whole');
+                const wholeCtx = wholeCanvas.getContext('2d');
+                wholeCtx.clearRect(0, 0, 30, 40);
+                this.drawNote(wholeCtx, noteX, noteY, 4, lineSpacing);
+                
+                // 2分音符（2拍）
+                const halfCanvas = document.getElementById('legend-half');
+                const halfCtx = halfCanvas.getContext('2d');
+                halfCtx.clearRect(0, 0, 30, 40);
+                this.drawNote(halfCtx, noteX, noteY, 2, lineSpacing);
+                
+                // 4分音符（1拍）
+                const quarterCanvas = document.getElementById('legend-quarter');
+                const quarterCtx = quarterCanvas.getContext('2d');
+                quarterCtx.clearRect(0, 0, 30, 40);
+                this.drawNote(quarterCtx, noteX, noteY, 1, lineSpacing);
+                
+                // 8分音符（0.5拍）
+                const eighthCanvas = document.getElementById('legend-eighth');
+                const eighthCtx = eighthCanvas.getContext('2d');
+                eighthCtx.clearRect(0, 0, 30, 40);
+                this.drawNote(eighthCtx, noteX, noteY, 0.5, lineSpacing);
+                
+                // 16分音符（0.25拍）
+                const sixteenthCanvas = document.getElementById('legend-sixteenth');
+                const sixteenthCtx = sixteenthCanvas.getContext('2d');
+                sixteenthCtx.clearRect(0, 0, 30, 40);
+                this.drawNote(sixteenthCtx, noteX, noteY, 0.25, lineSpacing);
+            }
+            
+            // ト音記号描画
+            drawTrebleClef(ctx, x, y, lineSpacing) {
+                ctx.font = (lineSpacing * 6) + 'px serif';
+                ctx.fillStyle = '#000';
+                ctx.fillText('𝄞', x, y + lineSpacing * 3.5);
+            }
+            
+            // 拍子記号描画（括線付き）
+            drawTimeSignature(ctx, x, y, beats, beatType, lineSpacing) {
+                const fontSize = lineSpacing * 1.8;
+                ctx.font = 'bold ' + fontSize + 'px serif';
+                ctx.fillStyle = '#000';
+                ctx.textAlign = 'center';
+                
+                // 上の数字（五線の上半分の中央に）
+                ctx.fillText(beats.toString(), x, y + lineSpacing * 1.5);
+                // 括線（分数線）五線の中央
+                ctx.fillRect(x - lineSpacing * 0.8, y + lineSpacing * 2, lineSpacing * 1.6, 1.5);
+                // 下の数字（五線の下半分の中央に）
+                ctx.fillText(beatType.toString(), x, y + lineSpacing * 3.8);
+                
+                ctx.textAlign = 'left';
+            }
+            
+            drawScore(playbackMs = -1) {
+                const canvas = document.getElementById('score-canvas');
+                const ctx = canvas.getContext('2d');
+                const wrapper = canvas.parentElement;
+                
+                const { beats, beatType } = this.getTimeSignatureInfo();
+                const beatMs = 60000 / this.tempo; // 4分音符の長さ（ms）
+                // 1小節の長さ = beats個のbeatType分音符
+                // beatType分音符の長さ = beatMs * (4 / beatType)
+                // 1小節の長さ = beats * beatMs * (4 / beatType)
+                const measureMs = beats * beatMs * (4 / beatType);
+                
+                const displayWidth = Math.max(wrapper.clientWidth - 10, 600);
+                const displayHeight = 300;
+                
+                canvas.width = displayWidth * 2;
+                canvas.height = displayHeight * 2;
+                canvas.style.width = displayWidth + 'px';
+                canvas.style.height = displayHeight + 'px';
+                ctx.scale(2, 2);
+                
+                // 背景
+                ctx.fillStyle = '#fffef8';
+                ctx.fillRect(0, 0, displayWidth, displayHeight);
+                
+                const lineSpacing = this.lineSpacing;
+                const staffHeight = this.staffHeight;
+                const staff1Top = this.marginTop;
+                const staff2Top = staff1Top + staffHeight + this.staffGap;
+                
+                // 1段目の五線
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < 5; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(this.marginLeft, staff1Top + i * lineSpacing);
+                    ctx.lineTo(displayWidth - 20, staff1Top + i * lineSpacing);
+                    ctx.stroke();
+                }
+                
+                // 2段目の五線
+                for (let i = 0; i < 5; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(this.marginLeft, staff2Top + i * lineSpacing);
+                    ctx.lineTo(displayWidth - 20, staff2Top + i * lineSpacing);
+                    ctx.stroke();
+                }
+                
+                // ト音記号
+                this.drawTrebleClef(ctx, this.marginLeft + 5, staff1Top, lineSpacing);
+                this.drawTrebleClef(ctx, this.marginLeft + 5, staff2Top, lineSpacing);
+                
+                // 拍子記号
+                this.drawTimeSignature(ctx, this.marginLeft + 60, staff1Top, beats, beatType, lineSpacing);
+                this.drawTimeSignature(ctx, this.marginLeft + 60, staff2Top, beats, beatType, lineSpacing);
+                
+                // 段の幅とページ計算
+                const staffWidth = displayWidth - this.notesStartX - 40;
+                const msPerStaff = staffWidth / this.pixelsPerMs;
+                const totalMsPerPage = msPerStaff * 2;
+                
+                // 現在のページを決定（再生時、録音時、閲覧時で異なる）
+                let displayPage = this.displayPage;
+                if (playbackMs >= 0) {
+                    displayPage = Math.floor(playbackMs / totalMsPerPage);
+                } else if (this.isRecording) {
+                    displayPage = this.currentPage;
+                }
+                
+                const pageStartMs = displayPage * totalMsPerPage;
+                const pageEndMs = pageStartMs + totalMsPerPage;
+                
+                // 小節線描画（最初の小節線は描画しない）
+                const startMeasure = Math.floor(pageStartMs / measureMs);
+                const endMeasure = Math.ceil(pageEndMs / measureMs);
+                
+                for (let m = startMeasure; m <= endMeasure; m++) {
+                    // 最初の小節線（m=0）は描画しない
+                    if (m === 0) continue;
+                    
+                    const measureAbsMs = m * measureMs;
+                    const measureRelMs = measureAbsMs - pageStartMs;
+                    
+                    // 1段目か2段目か判定
+                    if (measureRelMs >= 0 && measureRelMs <= msPerStaff) {
+                        const measureX = this.notesStartX + measureRelMs * this.pixelsPerMs;
+                        if (measureX > this.notesStartX && measureX < displayWidth - 20) {
+                            ctx.strokeStyle = '#333';
+                            ctx.lineWidth = 1;
+                            ctx.beginPath();
+                            ctx.moveTo(measureX, staff1Top);
+                            ctx.lineTo(measureX, staff1Top + staffHeight);
+                            ctx.stroke();
+                        }
+                    } else if (measureRelMs > msPerStaff && measureRelMs <= totalMsPerPage) {
+                        const staff2RelMs = measureRelMs - msPerStaff;
+                        const measureX = this.notesStartX + staff2RelMs * this.pixelsPerMs;
+                        if (measureX > this.notesStartX && measureX < displayWidth - 20) {
+                            ctx.strokeStyle = '#333';
+                            ctx.lineWidth = 1;
+                            ctx.beginPath();
+                            ctx.moveTo(measureX, staff2Top);
+                            ctx.lineTo(measureX, staff2Top + staffHeight);
+                            ctx.stroke();
+                        }
+                    }
+                }
+                
+                // 音符位置マッピング（五線上の正しい位置）
+                // ト音記号の五線（上から下へ）:
+                // 線0: F5, 線間0-1: E5, 線1: D5, 線間1-2: C5, 線2: B4
+                // 線間2-3: A4, 線3: G4, 線間3-4: F4, 線4: E4
+                // 線4の下: D4, 加線: C4
+                // 位置は五線の一番上(線0)を基準に、0.5刻みで下がる
+                const noteYPositions = {
+                    'C': 5,    // C4 - 加線（五線の下）
+                    'D': 4.5,  // D4 - 線4の下
+                    'E': 4,    // E4 - 線4（一番下の線）
+                    'F': 3.5,  // F4 - 線間3-4
+                    'G': 3,    // G4 - 線3
+                    'A': 2.5,  // A4 - 線間2-3
+                    'B': 2,    // B4 - 線2（中央の線）
+                    'C2': 5    // C5 - 次のオクターブのド（Cと同じ位置だがオクターブが+1される）
+                };
+                
+                // 和音検出用：同時刻の音符をグループ化
+                const chordGroups = new Map();
+                const chordThreshold = 50; // 50ms以内の音は和音とみなす
+                
+                this.recordedNotes.forEach((noteData, index) => {
+                    const relStartTime = noteData.startTime - pageStartMs;
+                    if (relStartTime < 0 || relStartTime >= totalMsPerPage) return;
+                    
+                    // 近い時間の音符をグループ化
+                    const timeKey = Math.floor(noteData.startTime / chordThreshold);
+                    if (!chordGroups.has(timeKey)) {
+                        chordGroups.set(timeKey, []);
+                    }
+                    chordGroups.get(timeKey).push({ noteData, index });
+                });
+                
+                // 音符描画（現在のページに属するもののみ）
+                this.recordedNotes.forEach((noteData, noteIndex) => {
+                    // ページ内の相対時間を計算
+                    const relStartTime = noteData.startTime - pageStartMs;
+                    
+                    // このページに含まれる音符かチェック
+                    if (relStartTime < 0 || relStartTime >= totalMsPerPage) return;
+                    
+                    // どの段に描画するか決定
+                    let staffTop = staff1Top;
+                    let drawX;
+                    
+                    if (relStartTime < msPerStaff) {
+                        // 1段目（音符を右にオフセット - 小節線の右側から開始）
+                        drawX = this.notesStartX + relStartTime * this.pixelsPerMs;
+                        staffTop = staff1Top;
+                    } else {
+                        // 2段目
+                        const staff2RelTime = relStartTime - msPerStaff;
+                        drawX = this.notesStartX + staff2RelTime * this.pixelsPerMs;
+                        staffTop = staff2Top;
+                    }
+                    
+                    // 和音の場合、近い音符を横にずらす
+                    const timeKey = Math.floor(noteData.startTime / chordThreshold);
+                    const chordGroup = chordGroups.get(timeKey) || [];
+                    if (chordGroup.length > 1) {
+                        // 和音内でY位置でソート
+                        const sortedChord = chordGroup.slice().sort((a, b) => {
+                            const aNote = a.noteData.note === 'C2' ? 'C2' : a.noteData.note.replace('#', '');
+                            const bNote = b.noteData.note === 'C2' ? 'C2' : b.noteData.note.replace('#', '');
+                            const aPos = noteYPositions[aNote] || 3;
+                            const bPos = noteYPositions[bNote] || 3;
+                            const aOctOffset = (a.noteData.octave - 4) * 3.5;
+                            const bOctOffset = (b.noteData.octave - 4) * 3.5;
+                            return (aPos - aOctOffset) - (bPos - bOctOffset);
+                        });
+                        
+                        // この音符のインデックスを見つける
+                        const myIndex = sortedChord.findIndex(item => item.index === noteIndex);
+                        
+                        // 隣接する音符（Y差が1.5以下）があるかチェック
+                        if (myIndex > 0) {
+                            const prevNote = sortedChord[myIndex - 1].noteData;
+                            const prevBaseNote = prevNote.note === 'C2' ? 'C2' : prevNote.note.replace('#', '');
+                            const prevPos = noteYPositions[prevBaseNote] || 3;
+                            const prevOctOffset = (prevNote.octave - 4) * 3.5;
+                            const prevY = prevPos - prevOctOffset;
+                            
+                            const currBaseNote = noteData.note === 'C2' ? 'C2' : noteData.note.replace('#', '');
+                            const currPos = noteYPositions[currBaseNote] || 3;
+                            const currOctOffset = (noteData.octave - 4) * 3.5;
+                            const currY = currPos - currOctOffset;
+                            
+                            // Y位置の差が1.5以下（隣接する音）なら右にずらす
+                            if (Math.abs(currY - prevY) <= 1.5) {
+                                // 交互にずらす（奇数番目の隣接音は右に）
+                                let shiftCount = 0;
+                                for (let i = 0; i < myIndex; i++) {
+                                    const checkNote = sortedChord[i].noteData;
+                                    const checkBaseNote = checkNote.note === 'C2' ? 'C2' : checkNote.note.replace('#', '');
+                                    const checkPos = noteYPositions[checkBaseNote] || 3;
+                                    const checkOctOffset = (checkNote.octave - 4) * 3.5;
+                                    const checkY = checkPos - checkOctOffset;
+                                    if (Math.abs(currY - checkY) <= 1.5) {
+                                        shiftCount++;
+                                    }
+                                }
+                                if (shiftCount % 2 === 1) {
+                                    drawX += lineSpacing * 1.5;
+                                }
+                            }
+                        }
+                    }
+                    
+                    const baseNote = noteData.note === 'C2' ? 'C2' : noteData.note.replace('#', '');
+                    const basePos = noteYPositions[baseNote] || 3;
+                    const octaveOffset = (noteData.octave - 4) * 3.5;
+                    const y = staffTop + (basePos - octaveOffset) * lineSpacing;
+                    
+                    const noteBeats = noteData.duration / beatMs;
+                    
+                    // シャープ
+                    if (noteData.note.includes('#')) {
+                        ctx.font = 'bold ' + (lineSpacing * 1.5) + 'px serif';
+                        ctx.fillStyle = '#000';
+                        ctx.fillText('♯', drawX - lineSpacing * 1.5, y + lineSpacing * 0.3);
+                    }
+                    
+                    this.drawNote(ctx, drawX, y, noteBeats, lineSpacing);
+                    
+                    // 補助線
+                    ctx.strokeStyle = '#333';
+                    ctx.lineWidth = 1;
+                    if (y > staffTop + staffHeight + lineSpacing * 0.3) {
+                        for (let ly = staffTop + staffHeight + lineSpacing; ly <= y + lineSpacing * 0.3; ly += lineSpacing) {
+                            ctx.beginPath();
+                            ctx.moveTo(drawX - lineSpacing * 0.7, ly);
+                            ctx.lineTo(drawX + lineSpacing * 0.7, ly);
+                            ctx.stroke();
+                        }
+                    }
+                    if (y < staffTop - lineSpacing * 0.3) {
+                        for (let ly = staffTop - lineSpacing; ly >= y - lineSpacing * 0.3; ly -= lineSpacing) {
+                            ctx.beginPath();
+                            ctx.moveTo(drawX - lineSpacing * 0.7, ly);
+                            ctx.lineTo(drawX + lineSpacing * 0.7, ly);
+                            ctx.stroke();
+                        }
+                    }
+                });
+                
+                // 再生位置表示線と拍子表示
+                if (playbackMs >= 0) {
+                    const relPlayMs = playbackMs - pageStartMs;
+                    
+                    if (relPlayMs >= 0 && relPlayMs < totalMsPerPage) {
+                        let lineX;
+                        let lineTop;
+                        let lineBottom;
+                        let staffForBeat;
+                        
+                        if (relPlayMs < msPerStaff) {
+                            lineX = this.notesStartX + relPlayMs * this.pixelsPerMs;
+                            lineTop = staff1Top - 10;
+                            lineBottom = staff1Top + staffHeight + 10;
+                            staffForBeat = staff1Top;
+                        } else {
+                            const staff2RelMs = relPlayMs - msPerStaff;
+                            lineX = this.notesStartX + staff2RelMs * this.pixelsPerMs;
+                            lineTop = staff2Top - 10;
+                            lineBottom = staff2Top + staffHeight + 10;
+                            staffForBeat = staff2Top;
+                        }
+                        
+                        // 再生位置線
+                        ctx.strokeStyle = '#e53935';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(lineX, lineTop);
+                        ctx.lineTo(lineX, lineBottom);
+                        ctx.stroke();
+                        
+                        // 拍子表示（五線譜の上に表示）
+                        // beatType分音符の長さ（ms）
+                        const beatUnitMs = beatMs * (4 / beatType);
+                        const currentBeat = Math.floor(playbackMs / beatUnitMs) % beats + 1;
+                        const currentMeasure = Math.floor(playbackMs / measureMs) + 1;
+                        
+                        // テンポ表示は常に縦赤線の真上に配置
+                        const beatBoxX = lineX;
+                        const boxWidth = 80; // ボックス幅
+                        
+                        // 背景ボックス（五線の上）
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+                        ctx.fillRect(beatBoxX - boxWidth / 2, staffForBeat - 32, boxWidth, 20);
+                        ctx.strokeStyle = '#e53935';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(beatBoxX - boxWidth / 2, staffForBeat - 32, boxWidth, 20);
+                        
+                        // テキスト
+                        ctx.fillStyle = '#e53935';
+                        ctx.font = 'bold 12px sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(currentMeasure + '小節 ' + currentBeat + '拍', beatBoxX, staffForBeat - 17);
+                        ctx.textAlign = 'left';
+                    }
+                }
+                
+                // ページ番号表示
+                if (this.recordedNotes.length > 0) {
+                    const lastNote = this.recordedNotes[this.recordedNotes.length - 1];
+                    const totalPages = Math.floor((lastNote.startTime + lastNote.duration) / totalMsPerPage) + 1;
+                    ctx.fillStyle = '#666';
+                    ctx.font = '12px sans-serif';
+                    ctx.textAlign = 'right';
+                    ctx.fillText('ページ ' + (displayPage + 1) + ' / ' + totalPages, displayWidth - 25, 20);
+                    ctx.textAlign = 'left';
+                }
+                
+                // 空の場合のメッセージ
+                if (this.recordedNotes.length === 0 && !this.isRecording) {
+                    ctx.fillStyle = '#999';
+                    ctx.font = '14px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('録音ボタンを押してピアノを弾くと楽譜が作成されます', displayWidth / 2, displayHeight / 2);
+                    ctx.textAlign = 'left';
+                }
+            }
+            
+            stopPlayback() {
+                if (!this.isPlaying) return;
+                
+                this.isPlaying = false;
+                this.stopRequested = true;
+                
+                if (this.playbackAnimationId) {
+                    cancelAnimationFrame(this.playbackAnimationId);
+                    this.playbackAnimationId = null;
+                }
+                
+                // 全ての再生中の音を停止
+                if (this.playbackOscillators) {
+                    this.playbackOscillators.forEach(({osc, gain}) => {
+                        try {
+                            gain.gain.cancelScheduledValues(this.audioCtx.currentTime);
+                            gain.gain.setValueAtTime(0, this.audioCtx.currentTime);
+                            osc.stop(this.audioCtx.currentTime + 0.01);
+                        } catch (e) {}
+                    });
+                    this.playbackOscillators = [];
+                }
+                
+                const playBtn = document.getElementById('play-btn');
+                const stopBtn = document.getElementById('stop-btn');
+                playBtn.style.display = 'block';
+                playBtn.textContent = '再生';
+                playBtn.disabled = false;
+                stopBtn.style.display = 'none';
+                this.updatePageNav();
+                this.drawScore(-1);
+            }
+            
+            async playScore() {
+                if (this.recordedNotes.length === 0) {
+                    alert('楽譜が空です。まず録音してください。');
+                    return;
+                }
+                
+                if (this.isPlaying) return;
+                this.isPlaying = true;
+                this.stopRequested = false;
+                this.playbackOscillators = [];
+                
+                const playBtn = document.getElementById('play-btn');
+                const stopBtn = document.getElementById('stop-btn');
+                playBtn.style.display = 'none';
+                stopBtn.style.display = 'block';
+                document.getElementById('page-nav').style.display = 'none';
+                
+                const { beats, beatType } = this.getTimeSignatureInfo();
+                const beatMs = 60000 / this.tempo;
+                
+                const sortedNotes = [...this.recordedNotes].sort((a, b) => a.startTime - b.startTime);
+                const lastNote = sortedNotes[sortedNotes.length - 1];
+                const totalDuration = lastNote.startTime + lastNote.duration;
+                const startTime = Date.now();
+                
+                // アニメーションループ
+                const animate = () => {
+                    if (this.stopRequested) return;
+                    const elapsed = Date.now() - startTime;
+                    if (elapsed <= totalDuration) {
+                        this.drawScore(elapsed);
+                        this.playbackAnimationId = requestAnimationFrame(animate);
+                    } else {
+                        this.drawScore(-1);
+                    }
+                };
+                this.playbackAnimationId = requestAnimationFrame(animate);
+                
+                // 音の再生（ピアノ音シミュレーション）
+                for (const noteData of sortedNotes) {
+                    if (this.stopRequested) break;
+                    
+                    const waitTime = noteData.startTime - (Date.now() - startTime);
+                    if (waitTime > 0) {
+                        await new Promise(r => setTimeout(r, Math.min(waitTime, 50)));
+                        if (this.stopRequested) break;
+                        if (waitTime > 50) {
+                            await new Promise(r => setTimeout(r, waitTime - 50));
+                            if (this.stopRequested) break;
+                        }
+                    }
+                    
+                    const frequency = this.getFrequency(noteData.note, noteData.octave);
+                    const now = this.audioCtx.currentTime;
+                    const duration = noteData.duration / 1000;
+                    
+                    // ピアノ音シミュレーション（複数の倍音を重ねる）
+                    const masterGain = this.audioCtx.createGain();
+                    masterGain.gain.setValueAtTime(0, now);
+                    masterGain.connect(this.audioCtx.destination);
+                    
+                    // 基音
+                    const osc1 = this.audioCtx.createOscillator();
+                    osc1.type = 'triangle';
+                    osc1.frequency.value = frequency;
+                    const gain1 = this.audioCtx.createGain();
+                    gain1.gain.value = 0.5;
+                    osc1.connect(gain1);
+                    gain1.connect(masterGain);
+                    osc1.start(now);
+                    osc1.stop(now + duration + 0.35);
+                    
+                    // 第2倍音
+                    const osc2 = this.audioCtx.createOscillator();
+                    osc2.type = 'sine';
+                    osc2.frequency.value = frequency * 2;
+                    const gain2 = this.audioCtx.createGain();
+                    gain2.gain.value = 0.25;
+                    osc2.connect(gain2);
+                    gain2.connect(masterGain);
+                    osc2.start(now);
+                    osc2.stop(now + duration + 0.35);
+                    
+                    // 第3倍音
+                    const osc3 = this.audioCtx.createOscillator();
+                    osc3.type = 'sine';
+                    osc3.frequency.value = frequency * 3;
+                    const gain3 = this.audioCtx.createGain();
+                    gain3.gain.value = 0.1;
+                    osc3.connect(gain3);
+                    gain3.connect(masterGain);
+                    osc3.start(now);
+                    osc3.stop(now + duration + 0.35);
+                    
+                    // ピアノらしいエンベロープ
+                    masterGain.gain.linearRampToValueAtTime(this.volume, now + 0.005);
+                    masterGain.gain.exponentialRampToValueAtTime(this.volume * 0.7, now + 0.1);
+                    masterGain.gain.setValueAtTime(this.volume * 0.6, now + duration * 0.8);
+                    masterGain.gain.exponentialRampToValueAtTime(0.001, now + duration + 0.3);
+                    
+                    this.playbackOscillators.push({osc: osc1, gain: masterGain});
+                }
+                
+                if (!this.stopRequested) {
+                    const remainingTime = totalDuration - (Date.now() - startTime);
+                    if (remainingTime > 0) {
+                        await new Promise(r => setTimeout(r, remainingTime));
+                    }
+                }
+                
+                if (!this.stopRequested) {
+                    cancelAnimationFrame(this.playbackAnimationId);
+                    this.isPlaying = false;
+                    playBtn.style.display = 'block';
+                    playBtn.textContent = '再生';
+                    playBtn.disabled = false;
+                    stopBtn.style.display = 'none';
+                    this.updatePageNav();
+                    this.drawScore(-1);
+                }
+            }
+        }
+        
+        let scoreApp;
+        document.addEventListener('DOMContentLoaded', () => {
+            scoreApp = new ScoreApp();
+        });
+    </script>
+</body>
+</html>

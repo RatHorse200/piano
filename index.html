@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ピアノ</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Segoe UI', 'Hiragino Sans', sans-serif; 
+            background: #f0f2f5;
+            min-height: 100vh;
+            color: #333;
+            padding: 15px;
+        }
+        h1 { 
+            text-align: center;
+            font-size: 1.6em; 
+            margin-bottom: 15px;
+            color: #1976d2;
+            font-weight: 600;
+        }
+        
+        /* ナビゲーション */
+        .nav {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        .nav a {
+            padding: 10px 24px;
+            background: #fff;
+            color: #1976d2;
+            text-decoration: none;
+            border-radius: 8px;
+            border: 2px solid #1976d2;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .nav a:hover {
+            background: #e3f2fd;
+        }
+        .nav a.active {
+            background: #1976d2;
+            color: #fff;
+        }
+        
+        .main-container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 20px;
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+        
+        /* コントロールパネル */
+        .control-panel {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 16px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .control-section {
+            margin-bottom: 12px;
+            padding: 12px;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #e8e8e8;
+        }
+        .control-section h3 {
+            font-size: 0.85em;
+            color: #1976d2;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #e3f2fd;
+            padding-bottom: 6px;
+            font-weight: 600;
+        }
+        .control-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 8px;
+        }
+        .control-row label {
+            width: 65px;
+            font-size: 0.8em;
+            color: #555;
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+        .control-row input[type="range"] {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #e0e0e0;
+            border-radius: 3px;
+            outline: none;
+            min-width: 80px;
+        }
+        .control-row input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #1976d2;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .control-row input[type="number"] {
+            width: 70px;
+            padding: 4px 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-family: 'Consolas', monospace;
+            text-align: right;
+            color: #333;
+            background: #fafafa;
+            flex-shrink: 0;
+        }
+        .control-row input[type="number"]:focus {
+            outline: none;
+            border-color: #1976d2;
+            background: #fff;
+        }
+        .control-row .unit {
+            font-size: 0.75em;
+            color: #888;
+            width: 22px;
+            flex-shrink: 0;
+        }
+        
+        /* 波形・音律選択 */
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+        .button-group button {
+            padding: 8px 6px;
+            background: #fff;
+            border: 1px solid #ddd;
+            color: #333;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75em;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .button-group button:hover {
+            background: #e3f2fd;
+            border-color: #1976d2;
+        }
+        .button-group button.active {
+            background: #1976d2;
+            color: #fff;
+            border-color: #1976d2;
+        }
+        
+        /* 右側エリア */
+        .right-area {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        /* グラフエリア */
+        .graphs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .graph-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+        }
+        .graph-container h4 {
+            font-size: 0.85em;
+            color: #555;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .graph-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 0.8em;
+        }
+        .graph-control label {
+            color: #666;
+            font-weight: 500;
+        }
+        .graph-control input[type="range"] {
+            flex: 1;
+            height: 4px;
+            -webkit-appearance: none;
+            background: #ddd;
+            border-radius: 2px;
+        }
+        .graph-control input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: #1976d2;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .graph-control input[type="number"] {
+            width: 55px;
+            padding: 3px 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.9em;
+            text-align: right;
+        }
+        canvas {
+            width: 100%;
+            height: 100px;
+            background: #1a1a2e;
+            border-radius: 6px;
+        }
+        
+        /* ピアノ */
+        .piano-container {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+        }
+        .piano-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        .octave-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .octave-control button {
+            background: #fff;
+            border: 1px solid #ddd;
+            color: #333;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .octave-control button:hover {
+            background: #e3f2fd;
+            border-color: #1976d2;
+        }
+        .octave-display {
+            font-size: 1.2em;
+            min-width: 100px;
+            text-align: center;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .piano {
+            display: flex;
+            justify-content: center;
+            background: #222;
+            padding: 15px 15px 8px 15px;
+            border-radius: 8px;
+            user-select: none;
+        }
+        .key {
+            position: relative;
+            width: 45px;
+            height: 150px;
+            background: linear-gradient(180deg, #f5f5f5 0%, #ddd 100%);
+            border: 1px solid #bbb;
+            border-radius: 0 0 6px 6px;
+            margin: 0 1px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 6px;
+        }
+        .key:hover { background: linear-gradient(180deg, #fff 0%, #eee 100%); }
+        .key.active {
+            background: linear-gradient(180deg, #ffd700 0%, #ffb700 100%);
+            transform: translateY(2px);
+        }
+        .key .note-name { font-size: 10px; color: #666; }
+        .key .key-bind {
+            font-size: 12px; color: #333; background: #ccc;
+            width: 22px; height: 22px; border-radius: 4px;
+            display: flex; align-items: center; justify-content: center;
+            margin-top: 3px; font-weight: bold;
+        }
+        
+        .black-key {
+            position: absolute;
+            width: 28px; height: 95px;
+            background: linear-gradient(180deg, #444 0%, #111 100%);
+            border: none; border-radius: 0 0 4px 4px;
+            z-index: 10; top: 0; cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 5px;
+        }
+        .black-key:hover { background: linear-gradient(180deg, #555 0%, #222 100%); }
+        .black-key.active {
+            background: linear-gradient(180deg, #ffd700 0%, #cc9900 100%);
+            transform: translateY(2px);
+        }
+        .black-key .note-name { 
+            color: #aaa; 
+            font-size: 8px;
+            margin-bottom: 2px;
+        }
+        .black-key .key-bind {
+            background: #555; color: #fff;
+            width: 18px; height: 18px; font-size: 10px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 3px;
+        }
+        
+        .black-key-wrapper {
+            position: relative;
+            width: 0;
+            overflow: visible;
+        }
+        .black-key-wrapper .black-key { left: -14px; }
+        
+        /* ステータス */
+        .status {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.95em;
+            color: #555;
+        }
+        .current-note {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #1976d2;
+        }
+        
+        /* 説明 */
+        .instructions {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 12px;
+            color: #666;
+            font-size: 0.85em;
+        }
+        .instructions .key-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .instructions .key-group .label {
+            font-weight: 600;
+            color: #555;
+        }
+        .instructions .key-group .keys {
+            background: #e8e8e8;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            letter-spacing: 1px;
+        }
+        
+        /* キーボードビジュアライザー */
+        .keyboard-visualizer {
+            background: #2d2d2d;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .keyboard-visualizer h4 {
+            text-align: center;
+            color: #aaa;
+            font-size: 0.8em;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+        .kb-key {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(180deg, #555 0%, #333 100%);
+            border: 1px solid #666;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #ccc;
+            font-size: 0.85em;
+            font-weight: bold;
+            transition: all 0.1s;
+            box-shadow: 0 3px 0 #222, 0 4px 6px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .kb-key .note-label {
+            font-size: 0.6em;
+            color: #888;
+            margin-top: 2px;
+        }
+        .kb-key.active {
+            background: linear-gradient(180deg, #ffd700 0%, #ff9500 100%);
+            color: #333;
+            transform: translateY(3px);
+            box-shadow: 0 0 0 #222, 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .kb-key.active .note-label {
+            color: #555;
+        }
+        .kb-key.octave-key {
+            background: linear-gradient(180deg, #4a6fa5 0%, #2d4a6a 100%);
+            border-color: #5a7fb5;
+        }
+        .kb-key.octave-key.active {
+            background: linear-gradient(180deg, #64b5f6 0%, #1976d2 100%);
+            color: #fff;
+        }
+        .kb-key.black-note {
+            background: linear-gradient(180deg, #3a3a3a 0%, #1a1a1a 100%);
+            border-color: #444;
+        }
+        .kb-key.black-note.active {
+            background: linear-gradient(180deg, #ffc107 0%, #ff8f00 100%);
+            color: #333;
+        }
+        .kb-key.unused {
+            background: linear-gradient(180deg, #444 0%, #2a2a2a 100%);
+            border-color: #555;
+            color: #666;
+            opacity: 0.5;
+        }
+        .kb-key.unused .note-label {
+            display: none;
+        }
+        .kb-spacer {
+            width: 21px;
+        }
+        .kb-spacer-half {
+            width: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- ナビゲーション -->
+    <nav class="nav">
+        <a href="score.html">楽譜作成</a>
+        <a href="index.html" class="active">ピアノ</a>
+    </nav>
+    
+    <h1>ピアノ</h1>
+    
+    <div class="main-container">
+        <!-- 左：コントロールパネル -->
+        <div class="control-panel">
+            <!-- 音 -->
+            <div class="control-section">
+                <h3>音</h3>
+                <div class="control-row">
+                    <label>音の高さ</label>
+                    <input type="range" id="base-freq" min="20" max="2000" step="0.1" value="480">
+                    <input type="number" id="base-freq-num" min="20" max="2000" step="0.1" value="480">
+                    <span class="unit">Hz</span>
+                </div>
+                <div class="control-row">
+                    <label>音量</label>
+                    <input type="range" id="volume" min="0" max="1" step="0.1" value="0.8">
+                    <input type="number" id="volume-num" min="0" max="1" step="0.1" value="0.8">
+                    <span class="unit"></span>
+                </div>
+            </div>
+            
+            <!-- 波形 -->
+            <div class="control-section">
+                <h3>波形</h3>
+                <div class="button-group" id="wave-buttons">
+                    <button class="active" data-wave="sine">正弦波</button>
+                    <button data-wave="square">矩形波</button>
+                    <button data-wave="triangle">三角波</button>
+                    <button data-wave="sawtooth">ノコギリ波</button>
+                </div>
+            </div>
+            
+            <!-- 音律 -->
+            <div class="control-section">
+                <h3>音律</h3>
+                <div class="button-group" id="temperament-buttons">
+                    <button class="active" data-temp="equal">12音平均律</button>
+                    <button data-temp="just">純正律</button>
+                    <button data-temp="pythagorean">ピタゴラス音律</button>
+                    <button data-temp="meantone">ミーントーン</button>
+                </div>
+            </div>
+            
+            <!-- ADSR エンベロープ -->
+            <div class="control-section">
+                <h3>エンベロープ</h3>
+                <div class="control-row">
+                    <label>Attack</label>
+                    <input type="range" id="attack" min="0" max="1" step="0.1" value="0.1">
+                    <input type="number" id="attack-num" min="0" max="1" step="0.1" value="0.1">
+                    <span class="unit"></span>
+                </div>
+                <div class="control-row">
+                    <label>Decay</label>
+                    <input type="range" id="decay" min="0" max="1" step="0.1" value="0.2">
+                    <input type="number" id="decay-num" min="0" max="1" step="0.1" value="0.2">
+                    <span class="unit"></span>
+                </div>
+                <div class="control-row">
+                    <label>Sustain</label>
+                    <input type="range" id="sustain" min="0" max="1" step="0.1" value="0.9">
+                    <input type="number" id="sustain-num" min="0" max="1" step="0.1" value="0.9">
+                    <span class="unit"></span>
+                </div>
+                <div class="control-row">
+                    <label>Release</label>
+                    <input type="range" id="release" min="0" max="1" step="0.1" value="0.3">
+                    <input type="number" id="release-num" min="0" max="1" step="0.1" value="0.3">
+                    <span class="unit"></span>
+                </div>
+            </div>
+            
+            <!-- ビブラート -->
+            <div class="control-section">
+                <h3>ビブラート</h3>
+                <div class="control-row">
+                    <label>周波数</label>
+                    <input type="range" id="vibrato-rate" min="0" max="1340" step="0.1" value="8">
+                    <input type="number" id="vibrato-rate-num" min="0" max="1340" step="0.1" value="8">
+                    <span class="unit">Hz</span>
+                </div>
+                <div class="control-row">
+                    <label>強度</label>
+                    <input type="range" id="vibrato-depth" min="0" max="1500" step="0.1" value="3">
+                    <input type="number" id="vibrato-depth-num" min="0" max="1500" step="0.1" value="3">
+                    <span class="unit">ct</span>
+                </div>
+            </div>
+            
+            <!-- うなり -->
+            <div class="control-section">
+                <h3>うなり</h3>
+                <div class="control-row">
+                    <label>周波数</label>
+                    <input type="range" id="beat-freq" min="0.1" max="30" step="0.1" value="8">
+                    <input type="number" id="beat-freq-num" min="0.1" max="30" step="0.1" value="8">
+                    <span class="unit">Hz</span>
+                </div>
+                <div class="control-row">
+                    <label>強度</label>
+                    <input type="range" id="beat-mix" min="0" max="1" step="0.1" value="0.5">
+                    <input type="number" id="beat-mix-num" min="0" max="1" step="0.1" value="0.5">
+                    <span class="unit"></span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右：グラフ＆ピアノ -->
+        <div class="right-area">
+            <!-- グラフ -->
+            <div class="graphs">
+                <div class="graph-container">
+                    <h4>波形：時間領域</h4>
+                    <canvas id="waveform"></canvas>
+                </div>
+                <div class="graph-container">
+                    <h4>解析：周波数領域</h4>
+                    <canvas id="spectrum"></canvas>
+                </div>
+            </div>
+            
+            <!-- ピアノ -->
+            <div class="piano-container">
+                <div class="piano-controls">
+                    <div class="octave-control">
+                        <button onclick="synth.changeOctave(-1)">◀ 低く</button>
+                        <div class="octave-display">オクターブ: <span id="octave-value">4</span></div>
+                        <button onclick="synth.changeOctave(1)">高く ▶</button>
+                    </div>
+                </div>
+                
+                <div class="piano" id="piano">
+                    <div class="key" data-note="C"><span class="note-name">ド</span><span class="key-bind">A</span></div>
+                    <div class="black-key-wrapper"><div class="black-key" data-note="C#"><span class="note-name">ド#</span><span class="key-bind">W</span></div></div>
+                    <div class="key" data-note="D"><span class="note-name">レ</span><span class="key-bind">S</span></div>
+                    <div class="black-key-wrapper"><div class="black-key" data-note="D#"><span class="note-name">レ#</span><span class="key-bind">E</span></div></div>
+                    <div class="key" data-note="E"><span class="note-name">ミ</span><span class="key-bind">D</span></div>
+                    <div class="key" data-note="F"><span class="note-name">ファ</span><span class="key-bind">F</span></div>
+                    <div class="black-key-wrapper"><div class="black-key" data-note="F#"><span class="note-name">ファ#</span><span class="key-bind">T</span></div></div>
+                    <div class="key" data-note="G"><span class="note-name">ソ</span><span class="key-bind">G</span></div>
+                    <div class="black-key-wrapper"><div class="black-key" data-note="G#"><span class="note-name">ソ#</span><span class="key-bind">Y</span></div></div>
+                    <div class="key" data-note="A"><span class="note-name">ラ</span><span class="key-bind">H</span></div>
+                    <div class="black-key-wrapper"><div class="black-key" data-note="A#"><span class="note-name">ラ#</span><span class="key-bind">U</span></div></div>
+                    <div class="key" data-note="B"><span class="note-name">シ</span><span class="key-bind">J</span></div>
+                    <div class="key" data-note="C2"><span class="note-name">ド</span><span class="key-bind">K</span></div>
+                </div>
+                
+                <div class="status">
+                    現在の音: <span class="current-note" id="current-note">-</span>
+                </div>
+                
+                <div class="instructions">
+                    <div class="key-group">
+                        <span class="label">白鍵:</span>
+                        <span class="keys">A S D F G H J K</span>
+                    </div>
+                    <div class="key-group">
+                        <span class="label">黒鍵:</span>
+                        <span class="keys">W E T Y U</span>
+                    </div>
+                    <div class="key-group">
+                        <span class="label">オクターブ:</span>
+                        <span class="keys">Z X</span>
+                    </div>
+                </div>
+                
+                <!-- キーボードビジュアライザー -->
+                <div class="keyboard-visualizer">
+                    <h4>キーボード</h4>
+                    <!-- 上段: Q W E R T Y U I -->
+                    <div class="keyboard-row" style="margin-right: 85px;">
+                        <div class="kb-key unused" data-kb="q">Q</div>
+                        <div class="kb-key black-note" data-kb="w">W<span class="note-label">ド#</span></div>
+                        <div class="kb-key black-note" data-kb="e">E<span class="note-label">レ#</span></div>
+                        <div class="kb-key unused" data-kb="r">R</div>
+                        <div class="kb-key black-note" data-kb="t">T<span class="note-label">ファ#</span></div>
+                        <div class="kb-key black-note" data-kb="y">Y<span class="note-label">ソ#</span></div>
+                        <div class="kb-key black-note" data-kb="u">U<span class="note-label">ラ#</span></div>
+                        <div class="kb-key unused" data-kb="i">I</div>
+                    </div>
+                    <!-- 中段: A S D F G H J K L -->
+                    <div class="keyboard-row" style="margin-left: 0px;">
+                        <div class="kb-key" data-kb="a">A<span class="note-label">ド</span></div>
+                        <div class="kb-key" data-kb="s">S<span class="note-label">レ</span></div>
+                        <div class="kb-key" data-kb="d">D<span class="note-label">ミ</span></div>
+                        <div class="kb-key" data-kb="f">F<span class="note-label">ファ</span></div>
+                        <div class="kb-key" data-kb="g">G<span class="note-label">ソ</span></div>
+                        <div class="kb-key" data-kb="h">H<span class="note-label">ラ</span></div>
+                        <div class="kb-key" data-kb="j">J<span class="note-label">シ</span></div>
+                        <div class="kb-key" data-kb="k">K<span class="note-label">ド</span></div>
+                        <div class="kb-key unused" data-kb="l">L</div>
+                    </div>
+                    <!-- 下段: Z X C -->
+                    <div class="keyboard-row" style="margin-right: 230px;">
+                        <div class="kb-key octave-key" data-kb="z">Z<span class="note-label">Oct-</span></div>
+                        <div class="kb-key octave-key" data-kb="x">X<span class="note-label">Oct+</span></div>
+                        <div class="kb-key unused" data-kb="c">C</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== シンセサイザークラス ==========
+        class Synthesizer {
+            constructor() {
+                this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                this.analyser = this.audioCtx.createAnalyser();
+                this.analyser.fftSize = 2048;
+                this.analyser.connect(this.audioCtx.destination);
+                
+                // 設定
+                this.octave = 4;
+                this.waveType = 'sine';
+                this.temperament = 'equal';
+                this.tuningA4 = 440;
+                
+                // 音
+                this.baseFreq = 480;
+                this.volume = 0.8;
+                
+                // ADSR
+                this.attack = 0.1;
+                this.decay = 0.2;
+                this.sustain = 0.9;
+                this.release = 0.3;
+                
+                // ビブラート
+                this.vibratoRate = 8;
+                this.vibratoDepth = 3
+                
+                // うなり
+                this.beatFreq = 8;
+                this.beatMix = 0.5;
+                
+                // 波形表示速度
+                this.waveSpeed = 1500;
+                
+                // キー状態
+                this.pressedKeys = new Set();
+                this.pressedMouse = new Set();
+                this.activeVoices = new Map();
+                
+                // キーマップ
+                this.keyMap = {
+                    'a': 'C', 'w': 'C#', 's': 'D', 'e': 'D#',
+                    'd': 'E', 'f': 'F', 't': 'F#', 'g': 'G',
+                    'y': 'G#', 'h': 'A', 'u': 'A#', 'j': 'B', 'k': 'C2'
+                };
+                
+                this.noteNames = {
+                    'C': 'ド', 'C#': 'ド#', 'D': 'レ', 'D#': 'レ#',
+                    'E': 'ミ', 'F': 'ファ', 'F#': 'ファ#', 'G': 'ソ',
+                    'G#': 'ソ#', 'A': 'ラ', 'A#': 'ラ#', 'B': 'シ', 'C2': 'ド'
+                };
+                
+                // 音律の比率
+                this.temperaments = {
+                    equal: [1, Math.pow(2, 1/12), Math.pow(2, 2/12), Math.pow(2, 3/12), Math.pow(2, 4/12), Math.pow(2, 5/12), Math.pow(2, 6/12), Math.pow(2, 7/12), Math.pow(2, 8/12), Math.pow(2, 9/12), Math.pow(2, 10/12), Math.pow(2, 11/12)],
+                    just: [1, 16/15, 9/8, 6/5, 5/4, 4/3, 45/32, 3/2, 8/5, 5/3, 9/5, 15/8],
+                    pythagorean: [1, 256/243, 9/8, 32/27, 81/64, 4/3, 729/512, 3/2, 128/81, 27/16, 16/9, 243/128],
+                    meantone: [1, 1.0449, 1.1180, 1.1963, 1.2500, 1.3375, 1.3975, 1.4953, 1.5625, 1.6719, 1.7889, 1.8692]
+                };
+                
+                this.setupControls();
+                this.setupEventListeners();
+                this.startVisualization();
+            }
+            
+            // 周波数計算
+            getFrequency(note, octave) {
+                const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+                let noteIndex = notes.indexOf(note);
+                let oct = octave;
+                
+                if (note === 'C2') { noteIndex = 0; oct = octave + 1; }
+                
+                const ratios = this.temperaments[this.temperament];
+                // baseFreqをA4として使用
+                const cFreq = this.baseFreq * Math.pow(2, (oct - 4)) / ratios[9];
+                
+                return cFreq * ratios[noteIndex];
+            }
+            
+            // 音を開始
+            noteOn(note) {
+                if (this.activeVoices.has(note)) return;
+                
+                const frequency = this.getFrequency(note, this.octave);
+                const now = this.audioCtx.currentTime;
+                
+                // メインオシレーター
+                const osc1 = this.audioCtx.createOscillator();
+                osc1.type = this.waveType;
+                osc1.frequency.value = frequency;
+                
+                // うなり用オシレーター
+                const osc2 = this.audioCtx.createOscillator();
+                osc2.type = this.waveType;
+                osc2.frequency.value = frequency + this.beatFreq;
+                
+                // ビブラート用LFO
+                const lfo = this.audioCtx.createOscillator();
+                lfo.type = 'sine';
+                lfo.frequency.value = this.vibratoRate;
+                
+                const lfoGain = this.audioCtx.createGain();
+                lfoGain.gain.value = this.vibratoDepth;
+                
+                lfo.connect(lfoGain);
+                lfoGain.connect(osc1.detune);
+                lfoGain.connect(osc2.detune);
+                
+                // ゲインノード
+                const gain1 = this.audioCtx.createGain();
+                const gain2 = this.audioCtx.createGain();
+                const masterGain = this.audioCtx.createGain();
+                
+                gain1.gain.value = 1 - this.beatMix * 0.5;
+                gain2.gain.value = this.beatFreq > 0 ? this.beatMix : 0;
+                
+                // ADSR（最小attack時間を設定してクリックノイズを防止）
+                const minAttack = 0.005;  // 5ms
+                const effectiveAttack = Math.max(this.attack, minAttack);
+                masterGain.gain.setValueAtTime(0, now);
+                masterGain.gain.linearRampToValueAtTime(this.volume, now + effectiveAttack);
+                masterGain.gain.linearRampToValueAtTime(this.volume * this.sustain, now + effectiveAttack + this.decay);
+                
+                // 接続
+                osc1.connect(gain1);
+                osc2.connect(gain2);
+                gain1.connect(masterGain);
+                gain2.connect(masterGain);
+                masterGain.connect(this.analyser);
+                
+                // 開始
+                osc1.start(now);
+                osc2.start(now);
+                lfo.start(now);
+                
+                // ボイスを保存
+                this.activeVoices.set(note, {
+                    osc1, osc2, lfo, gain1, gain2, masterGain, frequency
+                });
+                
+                // 表示更新
+                const octaveForNote = note === 'C2' ? this.octave + 1 : this.octave;
+                document.getElementById('current-note').textContent = 
+                    `${this.noteNames[note]}${octaveForNote} (${Math.round(frequency)}Hz)`;
+                
+                this.activateKey(note);
+            }
+            
+            // 音を停止
+            noteOff(note) {
+                const voice = this.activeVoices.get(note);
+                if (!voice) return;
+                
+                const now = this.audioCtx.currentTime;
+                
+                // リリース
+                voice.masterGain.gain.cancelScheduledValues(now);
+                voice.masterGain.gain.setValueAtTime(voice.masterGain.gain.value, now);
+                voice.masterGain.gain.linearRampToValueAtTime(0.0001, now + this.release);
+                
+                // 停止
+                voice.osc1.stop(now + this.release + 0.1);
+                voice.osc2.stop(now + this.release + 0.1);
+                voice.lfo.stop(now + this.release + 0.1);
+                
+                this.activeVoices.delete(note);
+                this.deactivateKey(note);
+            }
+            
+            // 鍵盤表示
+            activateKey(note) {
+                const key = document.querySelector(`[data-note="${note}"]`);
+                if (key) key.classList.add('active');
+            }
+            
+            deactivateKey(note) {
+                const key = document.querySelector(`[data-note="${note}"]`);
+                if (key) key.classList.remove('active');
+            }
+            
+            // オクターブ変更
+            changeOctave(delta) {
+                this.octave = Math.max(1, Math.min(7, this.octave + delta));
+                document.getElementById('octave-value').textContent = this.octave;
+            }
+            
+            // キーボードビジュアライザーのハイライト
+            highlightKeyboard(key, active) {
+                const kbKey = document.querySelector(`.kb-key[data-kb="${key}"]`);
+                if (kbKey) {
+                    if (active) {
+                        kbKey.classList.add('active');
+                    } else {
+                        kbKey.classList.remove('active');
+                    }
+                }
+            }
+            
+            // コントロール設定
+            setupControls() {
+                const controls = [
+                    { id: 'base-freq', prop: 'baseFreq' },
+                    { id: 'volume', prop: 'volume' },
+                    { id: 'attack', prop: 'attack' },
+                    { id: 'decay', prop: 'decay' },
+                    { id: 'sustain', prop: 'sustain' },
+                    { id: 'release', prop: 'release' },
+                    { id: 'vibrato-rate', prop: 'vibratoRate' },
+                    { id: 'vibrato-depth', prop: 'vibratoDepth' },
+                    { id: 'beat-freq', prop: 'beatFreq' },
+                    { id: 'beat-mix', prop: 'beatMix' }
+                ];
+                
+                controls.forEach(ctrl => {
+                    const rangeInput = document.getElementById(ctrl.id);
+                    const numInput = document.getElementById(ctrl.id + '-num');
+                    
+                    // スライダーの変更時
+                    rangeInput.addEventListener('input', () => {
+                        const val = parseFloat(rangeInput.value);
+                        this[ctrl.prop] = val;
+                        numInput.value = val;
+                    });
+                    
+                    // 数値入力の変更時
+                    numInput.addEventListener('input', () => {
+                        let val = parseFloat(numInput.value);
+                        const min = parseFloat(rangeInput.min);
+                        const max = parseFloat(rangeInput.max);
+                        if (isNaN(val)) val = min;
+                        val = Math.max(min, Math.min(max, val));
+                        this[ctrl.prop] = val;
+                        rangeInput.value = val;
+                    });
+                    
+                    // 数値入力からフォーカスが外れた時に値を正規化
+                    numInput.addEventListener('blur', () => {
+                        let val = parseFloat(numInput.value);
+                        const min = parseFloat(rangeInput.min);
+                        const max = parseFloat(rangeInput.max);
+                        if (isNaN(val)) val = min;
+                        val = Math.max(min, Math.min(max, val));
+                        numInput.value = val;
+                        rangeInput.value = val;
+                        this[ctrl.prop] = val;
+                    });
+                });
+                
+                // 波形ボタン
+                document.querySelectorAll('#wave-buttons button').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('#wave-buttons button').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        this.waveType = btn.dataset.wave;
+                    });
+                });
+                
+                // 音律ボタン
+                document.querySelectorAll('#temperament-buttons button').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('#temperament-buttons button').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        this.temperament = btn.dataset.temp;
+                    });
+                });
+            }
+            
+            // イベントリスナー
+            setupEventListeners() {
+                // キーボード
+                document.addEventListener('keydown', (e) => {
+                    if (e.repeat) return;
+                    const key = e.key.toLowerCase();
+                    
+                    // キーボードビジュアライザーをハイライト
+                    this.highlightKeyboard(key, true);
+                    
+                    if (key === 'z') { this.changeOctave(-1); return; }
+                    if (key === 'x') { this.changeOctave(1); return; }
+                    
+                    if (this.pressedKeys.has(key)) return;
+                    
+                    const note = this.keyMap[key];
+                    if (note) {
+                        this.pressedKeys.add(key);
+                        this.noteOn(note);
+                    }
+                });
+                
+                document.addEventListener('keyup', (e) => {
+                    const key = e.key.toLowerCase();
+                    
+                    // キーボードビジュアライザーのハイライトを解除
+                    this.highlightKeyboard(key, false);
+                    
+                    const note = this.keyMap[key];
+                    if (note) {
+                        this.pressedKeys.delete(key);
+                        this.noteOff(note);
+                    }
+                });
+                
+                // マウス
+                const piano = document.getElementById('piano');
+                
+                piano.addEventListener('mousedown', (e) => {
+                    let el = e.target;
+                    while (el && !el.dataset.note) el = el.parentElement;
+                    if (el && el.dataset.note) {
+                        const note = el.dataset.note;
+                        if (!this.pressedMouse.has(note)) {
+                            this.pressedMouse.add(note);
+                            this.noteOn(note);
+                        }
+                    }
+                });
+                
+                piano.addEventListener('mouseup', (e) => {
+                    let el = e.target;
+                    while (el && !el.dataset.note) el = el.parentElement;
+                    if (el && el.dataset.note) {
+                        const note = el.dataset.note;
+                        this.pressedMouse.delete(note);
+                        this.noteOff(note);
+                    }
+                });
+                
+                piano.addEventListener('mouseleave', () => {
+                    this.pressedMouse.forEach(note => this.noteOff(note));
+                    this.pressedMouse.clear();
+                });
+                
+                document.querySelectorAll('.key, .black-key').forEach(key => {
+                    key.addEventListener('mouseleave', () => {
+                        const note = key.dataset.note;
+                        if (this.pressedMouse.has(note)) {
+                            this.pressedMouse.delete(note);
+                            this.noteOff(note);
+                        }
+                    });
+                });
+            }
+            
+            // ビジュアライゼーション
+            startVisualization() {
+                const waveCanvas = document.getElementById('waveform');
+                const specCanvas = document.getElementById('spectrum');
+                const waveCtx = waveCanvas.getContext('2d');
+                const specCtx = specCanvas.getContext('2d');
+                
+                const bufferLength = this.analyser.frequencyBinCount;
+                const timeData = new Uint8Array(bufferLength);
+                const freqData = new Uint8Array(bufferLength);
+                
+                const draw = () => {
+                    requestAnimationFrame(draw);
+                    
+                    // キャンバスサイズ調整
+                    waveCanvas.width = waveCanvas.clientWidth * 2;
+                    waveCanvas.height = waveCanvas.clientHeight * 2;
+                    specCanvas.width = specCanvas.clientWidth * 2;
+                    specCanvas.height = specCanvas.clientHeight * 2;
+                    
+                    // 時間領域
+                    this.analyser.getByteTimeDomainData(timeData);
+                    waveCtx.fillStyle = '#1a1a2e';
+                    waveCtx.fillRect(0, 0, waveCanvas.width, waveCanvas.height);
+                    
+                    // グリッド線を描画
+                    waveCtx.strokeStyle = '#333';
+                    waveCtx.lineWidth = 1;
+                    // 中央線
+                    waveCtx.beginPath();
+                    waveCtx.moveTo(0, waveCanvas.height / 2);
+                    waveCtx.lineTo(waveCanvas.width, waveCanvas.height / 2);
+                    waveCtx.stroke();
+                    // 上下25%線
+                    waveCtx.setLineDash([5, 5]);
+                    waveCtx.beginPath();
+                    waveCtx.moveTo(0, waveCanvas.height / 4);
+                    waveCtx.lineTo(waveCanvas.width, waveCanvas.height / 4);
+                    waveCtx.moveTo(0, waveCanvas.height * 3 / 4);
+                    waveCtx.lineTo(waveCanvas.width, waveCanvas.height * 3 / 4);
+                    waveCtx.stroke();
+                    waveCtx.setLineDash([]);
+                    
+                    // 波形を描画（速度調整可能）
+                    const displaySamples = Math.max(16, Math.floor(this.waveSpeed / 10));
+                    const skipSamples = Math.max(1, Math.floor(5000 / this.waveSpeed));
+                    waveCtx.strokeStyle = '#00ff88';
+                    waveCtx.lineWidth = 4;  // 線を太くして見やすく
+                    waveCtx.shadowColor = '#00ff88';
+                    waveCtx.shadowBlur = 8;
+                    waveCtx.beginPath();
+                    
+                    const sliceWidth = waveCanvas.width / displaySamples;
+                    let x = 0;
+                    for (let i = 0; i < displaySamples; i++) {
+                        // 振幅を拡大して表示（中央からの変位を強調）
+                        const sampleIndex = Math.min(i * skipSamples, bufferLength - 1);
+                        const amplitude = (timeData[sampleIndex] - 128) / 128.0;
+                        const y = (0.5 - amplitude * 0.48) * waveCanvas.height;  // 振幅を大きく
+                        if (i === 0) waveCtx.moveTo(x, y);
+                        else waveCtx.lineTo(x, y);
+                        x += sliceWidth;
+                    }
+                    waveCtx.stroke();
+                    waveCtx.shadowBlur = 0;
+                    
+                    // 周波数領域
+                    this.analyser.getByteFrequencyData(freqData);
+                    specCtx.fillStyle = '#1a1a2e';
+                    specCtx.fillRect(0, 0, specCanvas.width, specCanvas.height);
+                    
+                    const barWidth = specCanvas.width / 128;
+                    for (let i = 0; i < 128; i++) {
+                        const barHeight = (freqData[i] / 255) * specCanvas.height;
+                        const hue = (i / 128) * 120;
+                        specCtx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                        specCtx.fillRect(i * barWidth, specCanvas.height - barHeight, barWidth - 1, barHeight);
+                    }
+                };
+                
+                draw();
+            }
+        }
+        
+        // 初期化
+        let synth;
+        document.addEventListener('DOMContentLoaded', () => {
+            synth = new Synthesizer();
+        });
+    </script>
+</body>
+</html>
