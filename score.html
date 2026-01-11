@@ -1539,7 +1539,9 @@
                         }
                     }
                     
-                    const frequency = this.getFrequency(noteData.note, noteData.octave);
+                    // C2は録音時にすでにオクターブ+1されているので、再生時はCとして扱う
+                    const playNote = noteData.note === 'C2' ? 'C' : noteData.note;
+                    const frequency = this.getFrequency(playNote, noteData.octave);
                     const now = this.audioCtx.currentTime;
                     const duration = noteData.duration / 1000;
                     
